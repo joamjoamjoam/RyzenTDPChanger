@@ -10,8 +10,8 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Management;
 using System.Reflection;
-using System.Threading;
 using Unbroken.LaunchBox.Plugins;
 using Unbroken.LaunchBox.Plugins.Data;
 
@@ -107,14 +107,14 @@ namespace RyzenTDPChanger
             loadSettings();
 
             // Wait for Steam Games to Exit.
-
-
-
+            steamAppCounter("Game Not Available", mode: "attach");
 
             // Wait for Epic Games to Exit.
 
 
             // Set Big Box TDP to Default = 15w TDP
+
+            System.Windows.Forms.MessageBox.Show($"Returning to UI TDP.");
             if (PluginHelper.StateManager.IsBigBox)
             {
                 setTDP(ryzenAdjPath, bigBoxTDP);
@@ -336,6 +336,108 @@ namespace RyzenTDPChanger
         public String getSettingsFile()
         {
             return Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "\\tdpSettings.json";
+        }
+
+        public object steamAppCounter(String appName = "", String mode = "count")
+        {
+            // mode == "count" return int count of all open steam processes
+            // mode == "attach" return null and loop until all steam processes are closed. 
+
+            object rv = null;
+
+            int exitCode = 0;
+            List<String> file = new List<string>();
+            try
+            {
+                List<Process> procs = Process.GetProcesses().ToList();
+                Process steam = procs.Find(x => x.ProcessName.ToLower() == "steam");
+
+                file.Add($"Mode: {mode}");
+                file.Add($"App Name: {appName}");
+
+
+                List<Process> procIdList = new List<Process>();
+                if (steam != null)
+                {
+                    file.Add($"Steam ID: {steam.Id}");
+                    int steamId = steam.Id;
+
+                    foreach (var proc in procs)
+                    {
+                        using (ManagementObject mo = new ManagementObject($"win32_process.handle='{proc.Id}'"))
+                        {
+                            if (mo != null)
+                            {
+                                try
+                                {
+                                    mo.Get();
+                                    int parentPid = Convert.ToInt32(mo["ParentProcessId"]);
+                                    if (parentPid == steamId)
+                                    {
+                                        Console.Out.WriteLine($"{proc.ProcessName} is running as a child to {mo["ParentProcessId"]}");
+                                        if (proc.ProcessName.ToLower() != "steamwebhelper")
+                                        {
+                                            if (proc.ProcessName.ToLower() == "gameoverlayui")
+                                            {
+                                                procIdList.Add(proc);
+                                                Console.Out.WriteLine($"{proc.ProcessName} was added to the running game count.");
+                                                // Attach onto Process and wait for it to exit
+
+
+                                            }
+
+                                        }
+                                    }
+
+                                }
+                                catch (Exception ex)
+                                {
+                                    // the process ended between polling all of the procs and requesting the management object
+                                }
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    Console.Out.WriteLine($"Steam is not Running");
+                }
+                Console.Out.WriteLine($"Games Running: {procIdList.Count}");
+
+                switch (mode)
+                {
+                    case "attach":
+                        // Hold Until Process Terminate
+                        Console.Out.WriteLine($"Attaching to Games Running:\n{String.Join("\n", procIdList.Select(p => $"{p.Id} - {p.ProcessName}"))}");
+                        file.Add($"Attaching to Games Running:\n{String.Join("\n", procIdList.Select(p => $"{p.Id} - {p.ProcessName}"))}");
+                        while (procIdList.Count > 0)
+                        {
+                            if (!procIdList[0].HasExited)
+                            {
+                                procIdList[0].WaitForExit();
+                            }
+                            procIdList.RemoveAt(0);
+                        }
+                        file.Add("Done Waiting on Attached Processes. Exiting Now.");
+                        exitCode = 0;
+                        rv = exitCode;
+                        break;
+                    case "count":
+                    default:
+                        file.Add($"Counted {procIdList.Count} Steam Processes Running");
+                        exitCode = procIdList.Count;
+                        rv = exitCode;
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                file.Add(ex.Message);
+            }
+
+            File.AppendAllLines(Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location) + "\\steamAppCounter.log", file);
+
+            return rv;
         }
     }
 }
