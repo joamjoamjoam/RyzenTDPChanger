@@ -1,7 +1,8 @@
 ### Features
 
--- Extend Launchbox so that it can set the TDP of Supported Ryzen APUs when games are launched.
--- TDPs can be set at the Global, Platform/Emulator, and game level.
+- Extend Launchbox so that it can set the TDP of Supported Ryzen APUs when games are launched.
+- Allow Launchbox to detect that steam games launched from url are still open.
+- TDPs can be set at the Global, Platform/Emulator, and game level.
 
 # Ryxen TDP Manager - Launchbox Plugin
 
@@ -24,7 +25,8 @@
 1. Double Click on the corresponding Cell in the Value column and put the TDP you wish to use for that game.
 
 Ex. for a 5W tdp
-Name| Value
+Name | Value
+-----| -----
 TDP   |   5   
 
 
@@ -38,3 +40,7 @@ None of this would be possible without RyzenAdj and its ability to set the TDP f
 Settings Menu:
 
 ![SettingsMenu](./settings.png)
+
+### Planned Improvements
+
+1.  Allow Launchbox to notice that Epic Game Store games launched via URL are still open.
