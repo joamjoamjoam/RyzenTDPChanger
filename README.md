@@ -4,7 +4,7 @@
 - Allow Launchbox to detect that steam games launched from url are still open.
 - TDPs can be set at the Global, Platform/Emulator, and game level.
 
-# Ryxen TDP Manager - Launchbox Plugin
+# Ryzen TDP Manager - Launchbox Plugin
 
 
 ### Installation
@@ -29,6 +29,14 @@ Name | Value
 -----| -----
 TDP   |   5   
 
+### Effective TDP Determination Order
+- Global
+- Platform
+- Game
+
+If the effective TDP is 0 the global default will be used.
+
+The TDP is reset to the Launchbox/Bigbox TDP set in the settings menu.
 
 ### Links and Credits
 [RyzenAdj](https://github.com/FlyGoat/RyzenAdj)
